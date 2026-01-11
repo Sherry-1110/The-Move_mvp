@@ -61,10 +61,15 @@ We are building a mobile-first web app called "The Move" for Northwestern Univer
      - **Effect:** Button overflows the top.
      - **Interaction:** Opens Create Modal.
 
-6. **Creating a Move (Modal):**
+6. **Creating a Move (Logic Update):**
    - **Inputs:** Title, Time, Location, Category, Max Participants, Notes.
+   - **Post Logic (NEW):**
+     - When the user clicks "Post", the new move is added to the global list.
+     - **CRITICAL:** The new move must be automatically marked as **Joined** (`isJoined: true`).
+     - **Result:** This ensures the new event immediately appears in the user's "My Moves" tab.
 
 **UI Requirements:**
 - Use Northwestern Purple (#4E2A84).
-- Ensure Notes look connected to the Title (Tight spacing).
-- Ensure Filter options have icons.
+- Ensure Notes align with Title.
+- Ensure Search is an icon button.
+- Ensure newly created events appear in My Moves.
