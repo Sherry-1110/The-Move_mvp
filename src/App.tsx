@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search } from 'lucide-react';
+import { collection, onSnapshot, addDoc, updateDoc, doc, orderBy, query, deleteDoc } from 'firebase/firestore';
+import { db } from './firebase';
 import type { Move, SortOption, SelectedFilters } from './types';
-import { mockMoves } from './utilities/mockData';
 import MoveCard from './components/MoveCard';
 import SearchBar from './components/SearchBar';
 import SortDropdown from './components/SortDropdown';
@@ -10,14 +11,44 @@ import EventDetailModal from './components/EventDetailModal';
 import CreateMoveForm from './components/CreateMoveForm';
 
 const App = () => {
-    const [moves, setMoves] = useState<Move[]>(mockMoves);
+    const [moves, setMoves] = useState<Move[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('newest');
     const [filterOption, setFilterOption] = useState<SelectedFilters>(['all']);
-    const [currentTab, setCurrentTab] = useState<'explore' | 'saved' | 'my-moves'>('explore');
+    const [currentTab, setCurrentTab] = useState<'events' | 'explore' | 'saved' | 'my-moves'>('explore');
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [showSearch, setShowSearch] = useState(false);
     const [selectedMove, setSelectedMove] = useState<Move | null>(null);
+
+    // Listen to Firestore changes
+    useEffect(() => {
+        const q = query(collection(db, 'moves'), orderBy('createdAt', 'desc'));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const movesData: Move[] = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                movesData.push({
+                    id: doc.id,
+                    title: data.title,
+                    category: data.category,
+                    timeRange: data.timeRange,
+                    status: data.status,
+                    participants: data.participants,
+                    maxParticipants: data.maxParticipants || undefined,
+                    notes: data.notes || undefined,
+                    location: data.location,
+                    exactMeetingSpot: data.exactMeetingSpot,
+                    comments: data.comments || [],
+                    isJoined: data.isJoined || false,
+                    isSaved: data.isSaved || false,
+                    isHost: true, // Temporarily set to true for demo
+                });
+            });
+            setMoves(movesData);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const filteredMoves = moves
         .filter(move => {
@@ -74,44 +105,76 @@ const App = () => {
         }
     })();
 
-    const handleJoinMove = (moveId: string) => {
-        setMoves(moves.map(move =>
-            move.id === moveId
-                ? {
-                    ...move,
-                    isJoined: !move.isJoined,
-                    participants: move.isJoined ? move.participants - 1 : move.participants + 1
-                }
-                : move
-        ));
+    const handleJoinMove = async (moveId: string) => {
+        const move = moves.find(m => m.id === moveId);
+        if (!move) return;
+
+        try {
+            const moveRef = doc(db, 'moves', moveId);
+            await updateDoc(moveRef, {
+                isJoined: !move.isJoined,
+                participants: move.isJoined ? move.participants - 1 : move.participants + 1
+            });
+        } catch (error) {
+            console.error('Error updating document: ', error);
+        }
     };
 
-    const handleSaveMove = (moveId: string) => {
-        setMoves(moves.map(move =>
-            move.id === moveId ? { ...move, isSaved: !move.isSaved } : move
-        ));
+    const handleSaveMove = async (moveId: string) => {
+        const move = moves.find(m => m.id === moveId);
+        if (!move) return;
+
+        try {
+            const moveRef = doc(db, 'moves', moveId);
+            await updateDoc(moveRef, {
+                isSaved: !move.isSaved
+            });
+        } catch (error) {
+            console.error('Error updating document: ', error);
+        }
     };
 
-    const handleAddComment = (moveId: string, commentText: string) => {
+    const handleAddComment = async (moveId: string, commentText: string) => {
+        const move = moves.find(m => m.id === moveId);
+        if (!move) return;
+
         const newComment = {
             user: 'You',
             text: commentText,
         };
-        setMoves(moves.map(move =>
-            move.id === moveId ? { ...move, comments: [...move.comments, newComment] } : move
-        ));
+
+        try {
+            const moveRef = doc(db, 'moves', moveId);
+            await updateDoc(moveRef, {
+                comments: [...move.comments, newComment]
+            });
+        } catch (error) {
+            console.error('Error updating document: ', error);
+        }
     };
 
-    const handleCreateMove = (newMove: Omit<Move, 'id' | 'participants' | 'isJoined' | 'isSaved'>) => {
-        const move: Move = {
-            ...newMove,
-            id: `m${Date.now()}`,
-            participants: 1,
-            isJoined: true,
-            isSaved: false,
-        };
-        setMoves([...moves, move]);
-        setShowCreateForm(false);
+    const handleDeleteMove = async (moveId: string) => {
+        try {
+            await deleteDoc(doc(db, 'moves', moveId));
+        } catch (error) {
+            console.error('Error deleting document: ', error);
+        }
+    };
+
+    const handleCreateMove = async (newMove: Omit<Move, 'id' | 'participants' | 'isJoined' | 'isSaved' | 'isHost'>) => {
+        try {
+            await addDoc(collection(db, 'moves'), {
+                ...newMove,
+                participants: 1,
+                isJoined: true,
+                isSaved: false,
+                isHost: true,
+                createdAt: new Date(),
+            });
+            setShowCreateForm(false);
+        } catch (error) {
+            console.error('Error adding document: ', error);
+        }
     };
 
     return (
@@ -182,8 +245,9 @@ const App = () => {
                             move={move}
                             onJoin={() => handleJoinMove(move.id)}
                             onSave={() => handleSaveMove(move.id)}
-                            onAddComment={(comment) => handleAddComment(move.id, comment)}
+                            onAddComment={(comment: string) => handleAddComment(move.id, comment)}
                             onTitleClick={() => setSelectedMove(move)}
+                            onDelete={() => handleDeleteMove(move.id)}
                         />
                     ))}
                 </div>

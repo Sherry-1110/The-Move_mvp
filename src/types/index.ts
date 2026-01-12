@@ -14,6 +14,7 @@ export interface Move {
     notes?: string; // Optional notes field
     isJoined: boolean;
     isSaved: boolean;
+    isHost: boolean; // Whether the current user is hosting this event
     location: string;
     exactMeetingSpot: string;
     comments: Comment[];

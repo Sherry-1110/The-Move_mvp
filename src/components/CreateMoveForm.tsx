@@ -28,6 +28,7 @@ const CreateMoveForm = ({ onSubmit, onCancel }: CreateMoveFormProps) => {
                 maxParticipants,
                 notes: formData.notes || undefined,
                 comments: [],
+                isHost: true,
             });
         }
     };

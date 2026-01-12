@@ -12,6 +12,7 @@ export const mockMoves: Move[] = [
         notes: 'Free / Bring water',
         isJoined: false,
         isSaved: false,
+        isHost: false,
         location: 'Lakefill',
         exactMeetingSpot: 'Meet near the sailing center rocks.',
         comments: [
@@ -28,6 +29,7 @@ export const mockMoves: Move[] = [
         participants: 3,
         isJoined: false,
         isSaved: false,
+        isHost: false,
         location: 'Tech LR5',
         exactMeetingSpot: 'Room 5, bring your student ID.',
         comments: [
@@ -43,6 +45,7 @@ export const mockMoves: Move[] = [
         participants: 4,
         isJoined: false,
         isSaved: false,
+        isHost: false,
         location: 'Caffeine',
         exactMeetingSpot: 'Outdoor seating area.',
         comments: [],
@@ -58,6 +61,7 @@ export const mockMoves: Move[] = [
         notes: 'Bring your own ball',
         isJoined: false,
         isSaved: false,
+        isHost: false,
         location: 'SPAC Courts',
         exactMeetingSpot: 'Court 3 entrance.',
         comments: [

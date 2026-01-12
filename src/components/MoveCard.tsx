@@ -9,9 +9,10 @@ interface MoveCardProps {
     onSave: () => void;
     onAddComment: (comment: string) => void;
     onTitleClick: () => void;
+    onDelete: () => void;
 }
 
-const MoveCard = ({ move, onJoin, onSave, onAddComment, onTitleClick }: MoveCardProps) => {
+const MoveCard = ({ move, onJoin, onSave, onAddComment, onTitleClick, onDelete }: MoveCardProps) => {
     const [showComments, setShowComments] = useState(false);
 
     const getStatusColor = (status: string) => {
@@ -121,6 +122,16 @@ const MoveCard = ({ move, onJoin, onSave, onAddComment, onTitleClick }: MoveCard
                             Unjoin
                         </button>
                     </div>
+                )}
+
+                {/* Delete Button for Hosts */}
+                {move.isHost && (
+                    <button
+                        onClick={onDelete}
+                        className="w-full bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600 transition-colors mt-2"
+                    >
+                        DELETE MOVE
+                    </button>
                 )}
 
                 {/* Discussion Toggle Button */}
